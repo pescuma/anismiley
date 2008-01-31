@@ -1,0 +1,12 @@
+HKCR
+{
+	NoRemove AppID
+	{
+		'%APPID%' = s 'GifSmiley'
+		'Insertable'
+		'AniSmiley.DLL'
+		{
+			val AppID = s '%APPID%'
+		}
+	}
+}
