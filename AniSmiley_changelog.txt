@@ -1,0 +1,60 @@
+Published under terms of GNU GPL v3 license
+
+Version 0.1.4.0
+-----------------------------
+- Fix for memory leak on image loading
+- Tune for image unloading by timer (faster HPP opening)
+- Fix for rightmost smiley incorect painting in HPP.
+- Accurate painting of selected smiley
+- Changed workflow for tooltips
+- Accurate determining of invisible smileys
+
+Version 0.1.3.7
+-----------------------------
+- Applied patch from Ricardo Pescuma for insert gif, png, bmp and jpg for emoticons plugin.
+
+
+Version 0.1.3.6 
+-----------------------------
+- Add more erorr checks at Insert code
+- Fix of regsvr registration script
+
+
+-----------------------------
+Version 0.1.3.5 (07.01.2008)
+-----------------------------
+- Fix of random crashes and unxpected windows behaviour
+
+
+-----------------------------
+Version 0.1.3.0 (03.01.2008)
+-----------------------------
+- Show smiley text in tooltip
+- Refactored Timer code
+- Decreased binary size (less than 96kB with staticaly linked msvcrt.lib)
+
+-----------------------------
+Version 0.1.2.1 (24.12.2007)
+-----------------------------
+- Single smiley positioning fix
+
+-----------------------------
+Version 0.1.2.0 (24.12.2007)
+-----------------------------
+- Reworked calculating of correct object pos
+- Updater Support
+
+-----------------------------
+Version 0.1.1.0 (20.12.2007)
+-----------------------------
+- Registry-free inserting of smileys
+- Code cleanup
+- Renaming of product.
+- Changed license
+----------------------------------------------------------------------
+
+-----------------------------
+Version 0.1.0.12
+-----------------------------
+- Initial upload
+----------------------------------------------------------------------
