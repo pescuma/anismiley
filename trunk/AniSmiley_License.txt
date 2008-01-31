@@ -1,3 +1,7 @@
+Copyright 2007-2008, Artem Shpynov & MirandaIM team
+
+Distributed under terms of folowing licence:
+
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
