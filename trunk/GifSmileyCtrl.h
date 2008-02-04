@@ -38,18 +38,30 @@ __interface IGifSmileyCtrl : public IDispatch
     [id(1)]	HRESULT LoadFromFile( [in] BSTR bstrFileName );
     [id(2)]	HRESULT LoadFromFileSized( [in] BSTR bstrFileName, [in] INT nHeight );
 	[id(3)]	HRESULT SetHostWindow( [in] long hwndHostWindow, [in] INT nNotyfyMode );
-    [id(4)] HRESULT SetHint( [in] BSTR bstrHint);
-    [id(5)] HRESULT GetHint( [out, retval] BSTR * bstrHint);
-	[id(6)] HRESULT ShowHint();
-
 };
 
+
+// IGifSmileyCtrl2
+[
+	object,
+	uuid(0418FB4B-E1AF-4e32-94AD-FF322C622AD3),
+	dual,
+	helpstring("IGifSmileyCtrl2 Interface"),
+	pointer_default(unique)
+]
+
+__interface IGifSmileyCtrl2 : public IDispatch
+{
+	[id(4)] HRESULT SetHint( [in] BSTR bstrHint);
+	[id(5)] HRESULT GetHint( [out, retval] BSTR * bstrHint);
+	[id(6)] HRESULT ShowHint();
+};
 
 //CGifSmileyCtrl
 [
 	coclass,
 	control,
-	default(IGifSmileyCtrl),
+	default(IGifSmileyCtrl2),
 	threading(apartment),
 	vi_progid("GifSmiley.GifSmileyCtrl"),
 	progid("GifSmiley.GifSmileyCtrl.1"),
@@ -60,6 +72,7 @@ __interface IGifSmileyCtrl : public IDispatch
 ]
 
 class ATL_NO_VTABLE CGifSmileyCtrl :
+	public IGifSmileyCtrl2,
     public CComControl<CGifSmileyCtrl>,
     public IOleObjectImpl<CGifSmileyCtrl>,
     public IOleInPlaceObjectWindowlessImpl<CGifSmileyCtrl>,
@@ -77,6 +90,7 @@ DECLARE_OLEMISC_STATUS(OLEMISC_RECOMPOSEONRESIZE |
 )
 
 BEGIN_COM_MAP(CGifSmileyCtrl)
+	COM_INTERFACE_ENTRY(IGifSmileyCtrl2)
     COM_INTERFACE_ENTRY(IGifSmileyCtrl)
 	COM_INTERFACE_ENTRY(IOleControl)
 	COM_INTERFACE_ENTRY(IOleObject)	

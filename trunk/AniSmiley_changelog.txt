@@ -1,3 +1,9 @@
+Version 0.1.5.0
+-----------------------------
+- Splitted interface:
+IGifSmileyCtrl  {CB64102B-8CE4-4A55-B050-131C435A3A3F}
+IGifSmileyCtrl2 {0418FB4B-E1AF-4e32-94AD-FF322C622AD3}
+
 Published under terms of GNU GPL v3 license
 
 Version 0.1.4.0
