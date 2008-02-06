@@ -1,3 +1,14 @@
+Version 0.1.6.0
+-----------------------------
+- Inheritance from IUnknown
+- Implementation of IID_ITooltipData interface {58B32D03-1BD2-4840-992E-9AE799FD4ADE}
+__interface ITooltipData : public IUnknown
+{
+public:
+	[id(1)] HRESULT SetTooltip( [in] BSTR bstrHint);
+	[id(2)] HRESULT GetTooltip( [out, retval] BSTR * bstrHint);
+};
+
 Version 0.1.5.0
 -----------------------------
 - Splitted interface:

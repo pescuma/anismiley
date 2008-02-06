@@ -125,7 +125,7 @@ static BOOL CALLBACK InsertAniSmiley(HWND hwnd, const TCHAR * filename, COLORREF
         if ( strHint.GetLength()>0 )
         {
             BSTR Hint=strHint.AllocSysString();
-            myObject->SetHint(Hint);
+            myObject->SetTooltip(Hint);
             SysFreeString(Hint);
         }
         
