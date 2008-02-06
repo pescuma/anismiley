@@ -22,12 +22,14 @@ using namespace Gdiplus;
 [
 	object,
 	uuid(CB64102B-8CE4-4A55-B050-131C435A3A3F),
-	dual,
+//	dual,
 	helpstring("IGifSmileyCtrl Interface"),
 	pointer_default(unique)
 ]
-__interface IGifSmileyCtrl : public IDispatch
+
+__interface IGifSmileyCtrl : public IUnknown
 {
+public:
 	[propput, bindable, requestedit, id(DISPID_BACKCOLOR)]
 	HRESULT BackColor([in]OLE_COLOR clr);
 	[propget, bindable, requestedit, id(DISPID_BACKCOLOR)]
@@ -38,30 +40,32 @@ __interface IGifSmileyCtrl : public IDispatch
     [id(1)]	HRESULT LoadFromFile( [in] BSTR bstrFileName );
     [id(2)]	HRESULT LoadFromFileSized( [in] BSTR bstrFileName, [in] INT nHeight );
 	[id(3)]	HRESULT SetHostWindow( [in] long hwndHostWindow, [in] INT nNotyfyMode );
+	[id(4)] HRESULT ShowHint( );
 };
 
 
-// IGifSmileyCtrl2
+// ITooltipData
 [
 	object,
-	uuid(0418FB4B-E1AF-4e32-94AD-FF322C622AD3),
-	dual,
-	helpstring("IGifSmileyCtrl2 Interface"),
+	uuid(58B32D03-1BD2-4840-992E-9AE799FD4ADE),
+//	dual,
+	helpstring("ITooltipData Interface"),
 	pointer_default(unique)
 ]
 
-__interface IGifSmileyCtrl2 : public IDispatch
+
+__interface ITooltipData : public IUnknown
 {
-	[id(4)] HRESULT SetHint( [in] BSTR bstrHint);
-	[id(5)] HRESULT GetHint( [out, retval] BSTR * bstrHint);
-	[id(6)] HRESULT ShowHint();
+public:
+	[id(1)] HRESULT SetTooltip( [in] BSTR bstrHint);
+	[id(2)] HRESULT GetTooltip( [out, retval] BSTR * bstrHint);
 };
 
 //CGifSmileyCtrl
 [
 	coclass,
 	control,
-	default(IGifSmileyCtrl2),
+	default(IGifSmileyCtrl),
 	threading(apartment),
 	vi_progid("GifSmiley.GifSmileyCtrl"),
 	progid("GifSmiley.GifSmileyCtrl.1"),
@@ -72,7 +76,7 @@ __interface IGifSmileyCtrl2 : public IDispatch
 ]
 
 class ATL_NO_VTABLE CGifSmileyCtrl :
-	public IGifSmileyCtrl2,
+	public ITooltipData,
     public CComControl<CGifSmileyCtrl>,
     public IOleObjectImpl<CGifSmileyCtrl>,
     public IOleInPlaceObjectWindowlessImpl<CGifSmileyCtrl>,
@@ -90,8 +94,8 @@ DECLARE_OLEMISC_STATUS(OLEMISC_RECOMPOSEONRESIZE |
 )
 
 BEGIN_COM_MAP(CGifSmileyCtrl)
-	COM_INTERFACE_ENTRY(IGifSmileyCtrl2)
     COM_INTERFACE_ENTRY(IGifSmileyCtrl)
+	COM_INTERFACE_ENTRY(ITooltipData)
 	COM_INTERFACE_ENTRY(IOleControl)
 	COM_INTERFACE_ENTRY(IOleObject)	
 END_COM_MAP()
@@ -119,15 +123,14 @@ public:
 
 	HRESULT FireViewChange();
 	HRESULT OnDrawAdvanced(ATL_DRAWINFO& di);
-
 	HRESULT LoadFromFile( BSTR bstrFileName );
 	HRESULT LoadFromFileSized( BSTR bstrFileName, INT nHeight );        
 	HRESULT SetHostWindow (long hwndHostWindow, INT nNotyfyMode );
 	void	OnBackColorChanged();
 	HRESULT FinalConstruct() {	return S_OK;}
 	void	FinalRelease(){}
-    HRESULT SetHint( BSTR bstrHint)  { m_strHint=bstrHint; return S_OK; }
-    HRESULT GetHint( BSTR * bstrHint) { *bstrHint = m_strHint.AllocSysString(); return S_OK; }
+    HRESULT SetTooltip( BSTR bstrHint)  { m_strHint=bstrHint; return S_OK; }
+    HRESULT GetTooltip( BSTR * bstrHint) { *bstrHint = m_strHint.AllocSysString(); return S_OK; }
 	HRESULT ShowHint( )
 	{
 		ShowSmileyTooltip();

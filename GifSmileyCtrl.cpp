@@ -14,8 +14,13 @@ DEFINE_GUIDXXX(IID_ITextDocument,0x8CC497C0,0xA1DF,0x11CE,0x80,0x98,
 DEFINE_GUIDXXX(IID_IGifSmileyCtrl, 0xCB64102B, 0x8CE4, 0x4A55,0xB0,0x50,
 			   0x13,0x1C,0x43,0x5A,0x3A,0x3F);
 
-DEFINE_GUIDXXX(IID_IGifSmileyCtrl2, 0x0418FB4B, 0xE1AF, 0x4e32,0x94,0xAD,
-			   0xFF,0x32,0x2C,0x62,0x2A,0xD3);
+// {58B32D03-1BD2-4840-992E-9AE799FD4ADE}
+DEFINE_GUIDXXX(IID_ITooltipData, 0x58b32d03, 0x1bd2, 0x4840,  0x99, 0x2e,
+			   0x9a, 0xe7, 0x99, 0xfd, 0x4a, 0xde );
+
+
+//DEFINE_GUIDXXX(IID_IGifSmileyCtrl2, 0x0418FB4B, 0xE1AF, 0x4e32,0x94,0xAD,
+//  			   0xFF,0x32,0x2C,0x62,0x2A,0xD3);
 
 
 #include "m_anismiley.h"
@@ -636,7 +641,7 @@ LRESULT CALLBACK CGifSmileyCtrl::HostWindowSubclassProc(HWND hwnd, UINT msg, WPA
 			ITextDocument* textDoc=NULL;
 			ITextRange* range=NULL;	
 			IUnknown *iObject = NULL;
-			IGifSmileyCtrl2 *iGifSmlCtrl=NULL;
+			IGifSmileyCtrl *iGifSmlCtrl=NULL;
 
 			do  {
 				if (!::SendMessage(hwnd, EM_GETOLEINTERFACE, 0, (LPARAM)&ole)) break;
@@ -652,7 +657,7 @@ LRESULT CALLBACK CGifSmileyCtrl::HostWindowSubclassProc(HWND hwnd, UINT msg, WPA
 					if (range->GetEmbeddedObject(&iObject) != S_OK) break;
 				}
 
-				if (iObject->QueryInterface(IID_IGifSmileyCtrl2, (void**) &iGifSmlCtrl) != S_OK) break;
+				if (iObject->QueryInterface(IID_IGifSmileyCtrl, (void**) &iGifSmlCtrl) != S_OK) break;
 				
 			} while(FALSE);
 			if (iGifSmlCtrl)
