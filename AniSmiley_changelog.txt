@@ -1,3 +1,7 @@
+Version 0.1.6.1
+-----------------------------
+- Stop animation in Close method
+
 Version 0.1.6.0
 -----------------------------
 - Inheritance from IUnknown

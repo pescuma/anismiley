@@ -467,7 +467,7 @@ HRESULT CGifSmileyCtrl::OnDrawSmiley(ATL_DRAWINFO& di, bool bCustom=false)
 		SelectObject(di.hdcDraw, oldBrush);
 		SelectObject(di.hdcDraw, oldPen);
 	}
-      AdvanceFrame();
+    AdvanceFrame();
 	if (!bCustom) 
         m_bPaintValid=false;
 	ResetClip(di.hdcDraw, hOldRgn, hNewRgn);
@@ -684,7 +684,12 @@ LRESULT CALLBACK CGifSmileyCtrl::HostWindowSubclassProc(HWND hwnd, UINT msg, WPA
 	}
 	return CallWindowProc(hwdat.pOldProc, hwnd, msg, wParam, lParam);
 }
-
+void CGifSmileyCtrl::StopAnimation()
+{
+	_mapTimers.erase(m_nTimerId);
+	::KillTimer(NULL,m_nTimerId);
+	m_nTimerId=NULL;
+}
 VOID CALLBACK CGifSmileyCtrl::TimerProc(HWND hwnd,UINT /*uMsg*/,UINT_PTR idEvent, DWORD /*dwTime*/)
 {
     CGifSmileyCtrl * me=NULL;//(CGifSmileyCtrl*)idEvent;
