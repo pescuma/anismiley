@@ -184,7 +184,12 @@ private:
     static VOID CALLBACK ToolTipTimerProc( HWND, UINT, UINT_PTR, DWORD );  
 	static VOID CALLBACK PurgeImageListTimerProc( HWND, UINT, UINT_PTR, DWORD );  
 	static LRESULT CALLBACK HostWindowSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
+	
+	STDMETHOD (Close) (DWORD dwSaveOption)
+	{
+		StopAnimation();
+		return __super::Close(dwSaveOption);
+	}
     BOOL        m_bTipShow;
     HWND        ShowSmileyTooltip();
     void        HideSmileyTip();
@@ -200,6 +205,8 @@ private:
 	void		AdvanceFrame();
 	void		OnTimer();    
 	HRESULT		OnDraw(ATL_DRAWINFO& di);
+	void		StopAnimation();
+	void		StartAnimation();
 };
 
 class ImageItem
