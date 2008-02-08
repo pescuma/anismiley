@@ -6,6 +6,7 @@ mkdir c:\_temp_dir_\doc\include
 copy %1 c:\_temp_dir_\
 copy AniSmiley_License.txt c:\_temp_dir_\doc\
 copy AniSmiley_changelog.txt c:\_temp_dir_\doc\
+copy AniSmiley_changelog.txt c:\
 copy m_anismiley.h c:\_temp_dir_\doc\include
 
 

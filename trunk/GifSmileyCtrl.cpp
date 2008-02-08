@@ -254,6 +254,19 @@ void  CGifSmileyCtrl::HideSmileyTip( )
 HWND CGifSmileyCtrl::ShowSmileyTooltip( )
 {
     TOOLINFO ti;
+	{
+		POINT pt;
+		GetCursorPos(&pt);
+		::ScreenToClient(m_hwndParent,&pt);
+		if (!PtInRect(&m_rectPos,pt))
+		{
+			if (_pCurrentTip)
+				_pCurrentTip->HideSmileyTip();
+			_pCurrentTip=NULL;
+			return NULL;
+		}
+	}
+
     if (m_bTipShow && _pCurrentTip==this)
         return _hwndToolTips;
     //check tip
@@ -261,6 +274,8 @@ HWND CGifSmileyCtrl::ShowSmileyTooltip( )
     {
         _pCurrentTip->HideSmileyTip();
     }
+	//check if mouse other this smiley
+
     _pCurrentTip=this;
     if (!_hwndToolTips) //::DestroyWindow(_hwndToolTips);
     {
