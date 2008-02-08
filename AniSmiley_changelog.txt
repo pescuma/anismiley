@@ -1,3 +1,7 @@
+Version 0.1.6.2
+-----------------------------
+- Check mouse over smiley before tip showing
+
 Version 0.1.6.1
 -----------------------------
 - Stop animation in Close method

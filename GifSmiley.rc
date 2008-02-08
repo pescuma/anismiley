@@ -52,8 +52,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,1,6,1
- PRODUCTVERSION 0,1,6,1
+ FILEVERSION 0,1,6,2
+ PRODUCTVERSION 0,1,6,2
  FILEFLAGSMASK 0x1fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -70,12 +70,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Miranda IM"
             VALUE "FileDescription", "AniSmiley service is Freeware service plugin for Miranda IM to provide ability to insert animated smileys into native SRMM dialogs."
-            VALUE "FileVersion", "0.1.6.1"
+            VALUE "FileVersion", "0.1.6.2"
             VALUE "InternalName", "AniSmiley.dll"
             VALUE "LegalCopyright", "(c)2007-2008 Artem Shpynov.  All rights reserved."
             VALUE "OriginalFilename", "AniSmiley.dll"
             VALUE "ProductName", "AniSmiley.dll"
-            VALUE "ProductVersion", "0.1.6.1"
+            VALUE "ProductVersion", "0.1.6.2"
         END
     END
     BLOCK "VarFileInfo"
