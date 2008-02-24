@@ -140,7 +140,7 @@ public:
 public:
     //  properties:    
 	OLE_COLOR	m_clrBackColor;
-	SIZEL		m_sizeExtent;
+//	SIZEL		m_sizeExtent;
 
 private:
 	typedef std::map<UINT_PTR, CGifSmileyCtrl*> MAPTIMER;
