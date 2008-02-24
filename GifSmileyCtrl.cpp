@@ -107,12 +107,12 @@ HRESULT  CGifSmileyCtrl::_UninitModule()
 
     _mapTimers.clear();
 
-    LISTIMAGES::iterator it=_listImages.begin();   
-    while (it!=_listImages.end())
-    {
-        delete (*it);
-        it++;
-    }
+	LISTIMAGES::iterator it=_listImages.begin();   
+	while (it!=_listImages.end())
+	{
+		delete (*it);
+		it++;
+	}
 	_listImages.clear();
 	_DestroyGdiPlus();
     
@@ -204,16 +204,16 @@ HRESULT CGifSmileyCtrl::LoadFromFileSized( BSTR bstrFileName, INT nHeight )
     UnloadImage();
     ATL::CString sFilename(bstrFileName);
     ImageItem * foundImage=NULL;
-    LISTIMAGES::iterator it=_listImages.begin();
-    while (it!=_listImages.end())
-    {
-        if ((*it) && (*it)->IsEqual(sFilename,nHeight))
-        {
-            foundImage=(*it);
-            break;
-        }
-        it++;
-    }
+	LISTIMAGES::iterator it=_listImages.begin();
+	while (it!=_listImages.end())
+	{
+		if ((*it) && (*it)->IsEqual(sFilename,nHeight))
+		{
+			foundImage=(*it);
+			break;
+		}
+		it++;
+	}
     if (!foundImage)
     {
         foundImage=new ImageItem;
@@ -731,7 +731,7 @@ VOID CALLBACK CGifSmileyCtrl::PurgeImageListTimerProc( HWND, UINT, UINT_PTR, DWO
 		if ((*it) && (*it)->GetRefCount()<1)
 		{			
 			delete(*it);
-			_listImages.erase(it);
+			it = _listImages.erase(it);
 			continue;
 		}
 		it++;

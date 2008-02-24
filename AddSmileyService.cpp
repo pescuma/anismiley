@@ -19,7 +19,7 @@ void *pLink=NULL;
 
 WINOLEAPI  CoInitializeEx(LPVOID pvReserved, DWORD dwCoInit);
 
-static BOOL CALLBACK InsertAniSmiley(HWND hwnd, const TCHAR * filename, COLORREF backColor, int cy, const TCHAR * text)
+static IUnknown * CALLBACK InsertAniSmiley(HWND hwnd, const TCHAR * filename, COLORREF backColor, int cy, const TCHAR * text)
 {
 	static BOOL hasFault=FALSE;
     static HWND hwndFaultOn=NULL;	
@@ -176,9 +176,9 @@ static BOOL CALLBACK InsertAniSmiley(HWND hwnd, const TCHAR * filename, COLORREF
         SysFreeString(path);		
         ::CoUninitialize();	
         ole->Release();  
-		return FALSE;
+		return NULL;
     }
-    return TRUE;
+	return (IUnknown *)(IOleControl *)myObject;
 }
 extern "C" int InsertAniSmileyService(WPARAM wParam, LPARAM lParam)
 {
