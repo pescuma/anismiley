@@ -38,7 +38,7 @@
 				RegisterOutput="TRUE"
 				IgnoreImportLibrary="TRUE"
 				AdditionalDependencies=" comsvcs.lib"
-				OutputFile="p:\miranda im\plugins/$(ProjectName).dll"
+				OutputFile="p:\Test\miranda im\plugins/$(ProjectName).dll"
 				LinkIncremental="2"
 				DelayLoadDLLs="gdiplus.dll"
 				MergedIDLBaseFileName="_GifSmiley.idl"

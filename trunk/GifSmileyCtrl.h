@@ -22,12 +22,11 @@ using namespace Gdiplus;
 [
 	object,
 	uuid(CB64102B-8CE4-4A55-B050-131C435A3A3F),
-//	dual,
+	dual,
 	helpstring("IGifSmileyCtrl Interface"),
 	pointer_default(unique)
 ]
-
-__interface IGifSmileyCtrl : public IUnknown
+__interface IGifSmileyCtrl : public IDispatch
 {
 public:
 	[propput, bindable, requestedit, id(DISPID_BACKCOLOR)]
@@ -48,12 +47,10 @@ public:
 [
 	object,
 	uuid(58B32D03-1BD2-4840-992E-9AE799FD4ADE),
-//	dual,
+	//dual,
 	helpstring("ITooltipData Interface"),
 	pointer_default(unique)
 ]
-
-
 __interface ITooltipData : public IUnknown
 {
 public:
