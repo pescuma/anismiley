@@ -235,6 +235,7 @@ HRESULT CGifSmileyCtrl::LoadFromFileSized( BSTR bstrFileName, INT nHeight )
         size.cx=m_nFrameSize.Width+2;
         size.cy=m_nFrameSize.Height;
         AtlPixelToHiMetric(&size,&m_sizeExtent);
+		FireViewChange();
         return S_OK;
     }
     return E_FAIL;    

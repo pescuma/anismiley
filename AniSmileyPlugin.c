@@ -28,7 +28,7 @@ extern void *pLink;
 PLUGININFOEX pluginInfo = {
         sizeof(PLUGININFOEX),
         "AniSmiley Service",
-        PLUGIN_MAKE_VERSION(0, 1, 6, 3),
+        PLUGIN_MAKE_VERSION(0, 1, 6, 4),
         "AniSmiley is service plugin for Miranda IM to provide ability for plugins to insert animated images into native SRMM dialogs.",
         "Artem Shpynov",
         "ashpynov@gmail.com",
