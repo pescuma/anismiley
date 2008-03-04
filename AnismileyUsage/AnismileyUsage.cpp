@@ -214,7 +214,7 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			ole->GetObject(0, &obj, REO_GETOBJ_POLEOBJ);
 			IGifSmileyCtrl * iGif;
 			obj.poleobj->QueryInterface(IID_IGifSmileyCtrl, (void**)&iGif);
-			iGif->LoadFromFileSized(L"drinks.gif",50);
+			iGif->LoadFromFile(L"drinks.gif");
 			iGif->Release();
 			obj.poleobj->Release();
 			ole->Release();
@@ -281,7 +281,7 @@ static BOOL CALLBACK InsertGifImage(HWND hwnd, const TCHAR * filename, COLORREF 
 
     	CHECKRESULT( m_lpAnimator.QueryInterface(IID_IGifSmileyCtrl, (void**)&m_lpGifSmileyControl) )
         //Load the gif
-        CHECKRESULT (m_lpGifSmileyControl->LoadFromFileSized(path, 0))
+        CHECKRESULT (m_lpGifSmileyControl->LoadFromFile(path))
 
         OLE_COLOR oleBackColor=(OLE_COLOR)backColor;
         m_lpAnimator->put_BackColor(oleBackColor);
