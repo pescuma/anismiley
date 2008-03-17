@@ -1,3 +1,7 @@
+Version 0.1.6.4
+-----------------------------
+- Flash support
+
 Version 0.1.6.3
 -----------------------------
 - Return pointer to created object on service call

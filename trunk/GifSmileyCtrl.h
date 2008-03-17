@@ -58,6 +58,9 @@ public:
 	[id(2)] HRESULT GetTooltip( [out, retval] BSTR * bstrHint);
 };
 
+class FlashWrapper;
+
+
 //CGifSmileyCtrl
 [
 	coclass,
@@ -172,6 +175,7 @@ private:
 	bool	 m_bPaintValid;
 	INT		 m_nNotifyMode;		//0 - none, 1 - empty, 2 - before, 3 - after
     DWORD	 m_dwFlags;
+	FlashWrapper *m_pFlash;
 
 private:  
     
@@ -216,6 +220,7 @@ private:
     UINT*        m_pFrameDelays;
     int          m_nFrameCount;
     Size         m_FrameSize;
+
 public:
     ImageItem();
     ~ImageItem();
