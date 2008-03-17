@@ -32,7 +32,9 @@ static IUnknown * CALLBACK InsertAniSmiley(HWND hwnd, const TCHAR * filename, CO
 
     ATL::CString strPicPath(filename);
     ATL::CString strExt=strPicPath.Right(4);
-	if (strExt.CompareNoCase(_T(".gif")) && strExt.CompareNoCase(_T(".jpg")) && strExt.CompareNoCase(_T(".png")) && strExt.CompareNoCase(_T(".bmp"))) 
+	if (strExt.CompareNoCase(_T(".gif")) && strExt.CompareNoCase(_T(".jpg")) 
+			&& strExt.CompareNoCase(_T(".png")) && strExt.CompareNoCase(_T(".bmp"))
+			&& strExt.CompareNoCase(_T(".swf"))) 
 		return FALSE;
 
 	IRichEditOle *ole = NULL;
