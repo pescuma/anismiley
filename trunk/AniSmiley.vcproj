@@ -117,7 +117,7 @@
 				IgnoreImportLibrary="TRUE"
 				AdditionalDependencies="comsvcs.lib"
 				ShowProgress="0"
-				OutputFile="p:/miranda im/plugins/$(ProjectName).dll"
+				OutputFile="$(OutputDir)/$(ProjectName).dll"
 				LinkIncremental="1"
 				IgnoreAllDefaultLibraries="FALSE"
 				DelayLoadDLLs="gdiplus.dll"
