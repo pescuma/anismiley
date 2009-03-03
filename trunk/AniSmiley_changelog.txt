@@ -1,3 +1,8 @@
+Version 0.1.7.0
+-----------------------------
+- Accepts input on flash (work in progress)
+- New API to specify the flash size
+
 Version 0.1.6.4
 -----------------------------
 - Flash support

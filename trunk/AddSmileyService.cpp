@@ -9,6 +9,9 @@
 #include <newpluginapi.h>
 #include <m_database.h>
 
+#include "flash9e.tlh"
+
+
 #define THROW(x) _com_issue_error(x)
 #define THROWIF(x) if (x) _com_issue_error(x);
 #define CHECKRESULT(sub) { HRESULT _hr; if ( FAILED( _hr=sub ) ) _com_issue_error(_hr); }
@@ -19,7 +22,12 @@ void *pLink=NULL;
 
 WINOLEAPI  CoInitializeEx(LPVOID pvReserved, DWORD dwCoInit);
 
-static IUnknown * CALLBACK InsertAniSmiley(HWND hwnd, const TCHAR * filename, COLORREF backColor, int cy, const TCHAR * text)
+#define RELEASE(_X_) if (_X_ != NULL) { _X_->Release(); _X_ = NULL; }
+
+
+
+static IUnknown * CALLBACK InsertAniSmiley(HWND hwnd, const TCHAR * filename, COLORREF backColor, 
+										   int cx, int cy, const TCHAR * text, const TCHAR * flashVars = NULL)
 {
 	static BOOL hasFault=FALSE;
     static HWND hwndFaultOn=NULL;	
@@ -32,9 +40,14 @@ static IUnknown * CALLBACK InsertAniSmiley(HWND hwnd, const TCHAR * filename, CO
 
     ATL::CString strPicPath(filename);
     ATL::CString strExt=strPicPath.Right(4);
-	if (strExt.CompareNoCase(_T(".gif")) && strExt.CompareNoCase(_T(".jpg")) 
-			&& strExt.CompareNoCase(_T(".png")) && strExt.CompareNoCase(_T(".bmp"))
-			&& strExt.CompareNoCase(_T(".swf"))) 
+	ATL::CString strStart=strPicPath.Left(7);
+
+	bool isImage = !(strExt.CompareNoCase(_T(".gif")) && strExt.CompareNoCase(_T(".jpg")) 
+			&& strExt.CompareNoCase(_T(".png")) && strExt.CompareNoCase(_T(".bmp")));
+	bool isFlash = !(strExt.CompareNoCase(_T(".swf")) 
+			&& strStart.CompareNoCase(_T("http://")));
+
+	if (!isImage && !isFlash)
 		return FALSE;
 
 	IRichEditOle *ole = NULL;
@@ -65,7 +78,7 @@ static IUnknown * CALLBACK InsertAniSmiley(HWND hwnd, const TCHAR * filename, CO
     {
         //Initialize COM interface
         CHECKRESULT( ::CoInitializeEx( NULL, COINIT_APARTMENTTHREADED ) );
-   
+  
 		CComObject<::CGifSmileyCtrl>::CreateInstance(&myObject);
         
         THROWIF(myObject==NULL)
@@ -75,8 +88,15 @@ static IUnknown * CALLBACK InsertAniSmiley(HWND hwnd, const TCHAR * filename, CO
         //COM operation need BSTR, so get a BSTR
         path = strPicPath.AllocSysString();
 
-        //Load the gif
-		CHECKRESULT( myObject->LoadFromFileSized(path, cy) )
+        //Load it
+		if (isImage)
+		{
+			CHECKRESULT( myObject->LoadFromFileSized(path, cy) )
+		}
+		else
+		{
+			CHECKRESULT( myObject->LoadFlash(path, _bstr_t(flashVars), cx, cy) )
+		}
 
 		//Set back color
         OLE_COLOR oleBackColor=(OLE_COLOR)backColor;
@@ -182,17 +202,19 @@ static IUnknown * CALLBACK InsertAniSmiley(HWND hwnd, const TCHAR * filename, CO
     }
 	return (IUnknown *)(IOleControl *)myObject;
 }
+
 extern "C" int InsertAniSmileyService(WPARAM wParam, LPARAM lParam)
 {
     if (wParam==0) return 0; 
     INSERTANISMILEY * ias=(INSERTANISMILEY *)wParam;
     ATL::CString file;
     ATL::CString text;
+	ATL::CString flashVars;
     if (ias->dwFlags&IASF_UNICODE)
         file=ias->wcFilename;
     else
         file=ias->szFilename;
-    if (ias->cbSize==sizeof(INSERTANISMILEY))
+    if (ias->cbSize >= 28) // Old anismiley size
     {
         if (ias->dwFlags&IASF_UNICODE)
             text=ias->wcText;
@@ -202,5 +224,20 @@ extern "C" int InsertAniSmileyService(WPARAM wParam, LPARAM lParam)
     else
         text="";
 
-    return (int)InsertAniSmiley(ias->hWnd, (const TCHAR*)file, ias->dwBackColor, ias->nHeight, (const TCHAR*)text );
+	int cx;
+	if (ias->cbSize >= sizeof(INSERTANISMILEY))
+	{
+		cx = ias->nWidth;
+        if (ias->dwFlags&IASF_UNICODE)
+            flashVars=ias->wcFlashVars;
+        else
+            flashVars=ias->szFlashVars;
+	}
+	else
+	{
+		cx = 0;
+		flashVars="";
+	}
+
+    return (int)InsertAniSmiley(ias->hWnd, (const TCHAR*)file, ias->dwBackColor, cx, ias->nHeight, (const TCHAR*)text, (const TCHAR*)flashVars );
 }
