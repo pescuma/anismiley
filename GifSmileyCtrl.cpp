@@ -72,6 +72,7 @@ class FlashWrapper : virtual public IOleClientSite,
 					 virtual public IStorage
 {
 public:
+	int refCount;
 	SIZE size;
 	RECT pos;
 	CGifSmileyCtrl *owner;
@@ -80,8 +81,10 @@ public:
 	IViewObjectEx *flashViewObject;
 	IOleInPlaceObjectWindowless *flashInPlaceObjWindowless;
 
-	FlashWrapper(CGifSmileyCtrl *anOwner, const TCHAR *filename)
+	FlashWrapper(CGifSmileyCtrl *anOwner, const TCHAR *filename, const TCHAR *flashVars,
+				 int width = -1, int height = -1)
 	{
+		refCount = 0;
 		flash = NULL;
 		flashOleObject = NULL;
 		flashViewObject = NULL;
@@ -115,6 +118,7 @@ public:
 		flash->put_BackgroundColor(0x00000000);
 		flash->put_EmbedMovie(TRUE);
 		flash->put_Loop(TRUE);
+		flash->put_FlashVars(_bstr_t(flashVars));
 
 		hr = flash->LoadMovie(0, _bstr_t(filename));
 		if (FAILED(hr)) goto err;
@@ -123,13 +127,31 @@ public:
 		if (FAILED(hr)) goto err;
 		if (readyState != 3 && readyState != 4) goto err;
 
-		hr = flash->TGetPropertyAsNumber(_bstr_t("/"), 8, &val);
-		if (FAILED(hr)) goto err;
-		size.cx = (long)(val + 0.5);
+		if (width > 0)
+		{
+			size.cx = width;
+		}
+		else
+		{
+			hr = flash->TGetPropertyAsNumber(_bstr_t("/"), 8, &val);
+			if (FAILED(hr)) 
+				size.cx = 200;
+			else
+				size.cx = (long)(val + 0.5);
+		}
 
-		hr = flash->TGetPropertyAsNumber(_bstr_t("/"), 9, &val);
-		if (FAILED(hr)) goto err;
-		size.cy = (long)(val + 0.5);
+		if (height > 0)
+		{
+			size.cy = height;
+		}
+		else
+		{
+			hr = flash->TGetPropertyAsNumber(_bstr_t("/"), 9, &val);
+			if (FAILED(hr)) 
+				size.cy = 150;
+			else
+				size.cy = (long)(val + 0.5);
+		}
 
 		pos.left = 0;
 		pos.top = 0;
@@ -157,14 +179,12 @@ err:
 
 	void Destroy()
 	{
-	{
 		if (flashOleObject != NULL)
 			flashOleObject->Close(OLECLOSE_NOSAVE);
 		RELEASE(flashViewObject)
 		RELEASE(flashInPlaceObjWindowless)
 		RELEASE(flashOleObject)
 		RELEASE(flash)
-	}
 	}
 
 	BOOL isValid() 
@@ -189,6 +209,13 @@ err:
 		OleDraw(flashViewObject, DVASPECT_TRANSPARENT, hdc, &pos);
 	}
 
+	LRESULT OnMsg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+	{
+		LRESULT res;
+		flashInPlaceObjWindowless->OnWindowMessage(msg, wParam, lParam, &res);
+		return res;
+	}
+
 
 	//interface methods
 
@@ -211,10 +238,11 @@ err:
 			*ppvObject = 0;
 		if (!(*ppvObject))
 			return E_NOINTERFACE; //if dynamic_cast returned 0
+		refCount++;
 		return S_OK;
 	}
-	ULONG STDMETHODCALLTYPE AddRef() { return 1; }
-	ULONG STDMETHODCALLTYPE Release() { return 1; }
+	ULONG STDMETHODCALLTYPE AddRef() { return ++refCount; }
+	ULONG STDMETHODCALLTYPE Release() { return --refCount; }
 
 
 	//IOleClientSite
@@ -274,7 +302,10 @@ err:
     virtual HRESULT STDMETHODCALLTYPE InvalidateRgn(HRGN hRGN, BOOL fErase) { return S_OK; }
     virtual HRESULT STDMETHODCALLTYPE ScrollRect(INT dx, INT dy, LPCRECT pRectScroll, LPCRECT pRectClip) { return E_NOTIMPL; }
     virtual HRESULT STDMETHODCALLTYPE AdjustRect(LPRECT prc) { return S_FALSE; }
-    virtual HRESULT STDMETHODCALLTYPE OnDefWindowMessage(UINT msg, WPARAM wParam, LPARAM lParam, LRESULT __RPC_FAR *plResult) { return S_FALSE; }
+    virtual HRESULT STDMETHODCALLTYPE OnDefWindowMessage(UINT msg, WPARAM wParam, LPARAM lParam, LRESULT __RPC_FAR *plResult) 
+	{
+		return S_FALSE; 
+	}
 
 	//IOleInPlaceFrame
 	virtual HRESULT STDMETHODCALLTYPE GetBorder(LPRECT lprectBorder) { return E_NOTIMPL; }
@@ -393,6 +424,18 @@ CGifSmileyCtrl::CGifSmileyCtrl()
 }
 CGifSmileyCtrl::~CGifSmileyCtrl()
 {
+	// Desubclass
+	{
+		MAPHOSTINFO::iterator it = _mapHostInfo.find(m_hwndParent);
+		if (it != _mapHostInfo.end())
+		{
+			HostWindowData hwdat = it->second;
+			if (hwdat.pOldProc != NULL)
+				::SetWindowLong(m_hwndParent, GWL_WNDPROC, (LONG) hwdat.pOldProc);
+			_mapHostInfo.erase(it);
+		}
+	}
+
     UnloadImage();
  
     LISTSMILEYS::iterator it=_listSmileys.begin();
@@ -410,6 +453,7 @@ CGifSmileyCtrl::~CGifSmileyCtrl()
         _UninitModule();
     }
 }
+
 HRESULT CGifSmileyCtrl::UnloadImage( )
 {
     if ( m_nTimerId ) 
@@ -450,25 +494,42 @@ HRESULT CGifSmileyCtrl::LoadFromFile( BSTR bstrFileName )
     return CGifSmileyCtrl::LoadFromFileSized( bstrFileName, (INT) 0 );
 }
 
+HRESULT CGifSmileyCtrl::LoadFlash( BSTR bstrFileName, BSTR bstrFlashVars, INT nWidth, INT nHeight )
+{
+    if ( _gdiPlusFail ) return E_FAIL;
+    UnloadImage();
+
+	if (nWidth <= 0 || nHeight <= 0)
+		nWidth = nHeight = 0;
+
+    ATL::CString sFilename(bstrFileName);
+    ATL::CString sFlashVars(bstrFlashVars);
+
+	m_pFlash = new FlashWrapper(this, sFilename.GetBuffer(), sFlashVars.GetBuffer(), nWidth, nHeight);
+	if (!m_pFlash->isValid())
+	{
+		delete m_pFlash;
+		m_pFlash = NULL;
+		return E_FAIL;
+	}
+
+	m_nFrameSize.Width = m_pFlash->size.cx;
+	m_nFrameSize.Height = m_pFlash->size.cy;
+	m_nFrameCount = 1;
+    SIZEL size;
+    size.cx=m_nFrameSize.Width+2;
+    size.cy=m_nFrameSize.Height;
+    AtlPixelToHiMetric(&size,&m_sizeExtent);
+	FireViewChange();
+    return S_OK;
+}
+
 HRESULT CGifSmileyCtrl::LoadFromFileSized( BSTR bstrFileName, INT nHeight )
 {
     if ( _gdiPlusFail ) return E_FAIL;
     UnloadImage();
-    ATL::CString sFilename(bstrFileName);
 
-	if (!sFilename.Right(4).CompareNoCase(_T(".swf")))
-	{
-		m_pFlash = new FlashWrapper(this, sFilename.GetBuffer());
-		m_nFrameSize.Width = m_pFlash->size.cx;
-		m_nFrameSize.Height = m_pFlash->size.cy;
-		m_nFrameCount = 1;
-        SIZEL size;
-        size.cx=m_nFrameSize.Width+2;
-        size.cy=m_nFrameSize.Height;
-        AtlPixelToHiMetric(&size,&m_sizeExtent);
-		FireViewChange();
-        return S_OK;
-	}
+    ATL::CString sFilename(bstrFileName);
 
     ImageItem * foundImage=NULL;
 	LISTIMAGES::iterator it=_listImages.begin();
@@ -656,6 +717,14 @@ HRESULT CGifSmileyCtrl::OnDrawAdvanced(ATL_DRAWINFO& di)
 
 HRESULT CGifSmileyCtrl::OnDraw(ATL_DRAWINFO& di)
 {
+	MAPHOSTINFO::iterator it = _mapHostInfo.find(m_hwndParent);
+	if (it != _mapHostInfo.end())
+	{
+		HostWindowData &hwd = it->second;
+		if (hwd.hwnd != NULL && hwd.pOldProc == NULL)
+			hwd.pOldProc = (WNDPROC)::SetWindowLong(m_hwndParent, GWL_WNDPROC, (LONG) HostWindowSubclassProc);
+	}
+
 	return OnDrawSmiley(di,false);
 }
 
@@ -665,12 +734,13 @@ HRESULT CGifSmileyCtrl::SetHostWindow( long hwndHostWindow, INT nNotyfyMode )
 	m_nNotifyMode=nNotyfyMode;
 
 	// Subclass parent to show tooltip
-	WNDPROC oldProc=(WNDPROC)::GetWindowLong(m_hwndParent, GWL_WNDPROC);
-	HostWindowData hwd=_mapHostInfo[m_hwndParent];
+	WNDPROC oldProc = (WNDPROC)::GetWindowLong(m_hwndParent, GWL_WNDPROC);
+	HostWindowData hwd = _mapHostInfo[m_hwndParent];
 	if (hwd.hwnd==NULL)
 	{
 		hwd.hwnd=m_hwndParent;
-		hwd.pOldProc=(WNDPROC)::SetWindowLong(m_hwndParent, GWL_WNDPROC, (LONG) HostWindowSubclassProc);;
+		hwd.pOldProc=NULL;
+//		hwd.pOldProc=(WNDPROC)::SetWindowLong(m_hwndParent, GWL_WNDPROC, (LONG) HostWindowSubclassProc);
 		_mapHostInfo[m_hwndParent]=hwd;		
 	}	
 	return S_OK;
@@ -921,18 +991,33 @@ inline HRESULT CGifSmileyCtrl::FireViewChange()
 }
 
 
-
 LRESULT CALLBACK CGifSmileyCtrl::HostWindowSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	HostWindowData hwdat=_mapHostInfo[hwnd];
-	if(hwdat.hwnd!=hwnd) return FALSE;
-	
+	MAPHOSTINFO::iterator it = _mapHostInfo.find(hwnd);
+	if (it == _mapHostInfo.end())
+		return FALSE;
+	HostWindowData hwdat = it->second;
+	if	(hwdat.hwnd != hwnd) 
+		return FALSE;
+
 	switch (msg)
 	{
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_LBUTTONDBLCLK:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_RBUTTONDBLCLK:
+	case WM_MBUTTONDOWN: 
+	case WM_MBUTTONUP:
+	case WM_MBUTTONDBLCLK:
 	case WM_MOUSEMOVE:
+	case WM_MOUSEWHEEL:
+	case WM_SETCURSOR:
 		{
-			POINT pt={LOWORD(lParam), HIWORD(lParam)};
-			::ClientToScreen(hwnd, &pt);		
+			LPARAM pos = GetMessagePos();
+			POINT pt={LOWORD(pos), HIWORD(pos)};
+
 			IRichEditOle * ole=NULL;
 			ITextDocument* textDoc=NULL;
 			ITextRange* range=NULL;	
@@ -956,9 +1041,16 @@ LRESULT CALLBACK CGifSmileyCtrl::HostWindowSubclassProc(HWND hwnd, UINT msg, WPA
 				if (iObject->QueryInterface(IID_IGifSmileyCtrl, (void**) &iGifSmlCtrl) != S_OK) break;
 				
 			} while(FALSE);
+			LRESULT ret = 0;
 			if (iGifSmlCtrl)
 			{
-				iGifSmlCtrl->ShowHint();
+				RECT rc = {0};
+				iGifSmlCtrl->GetRECT(&rc);
+
+				::ScreenToClient(hwnd, &pt);
+
+				if (PtInRect(&rc, pt))
+					iGifSmlCtrl->OnMsg(hwnd, msg, wParam, lParam, &ret);
 				iGifSmlCtrl->Release();
 			}
 			else
@@ -968,13 +1060,18 @@ LRESULT CALLBACK CGifSmileyCtrl::HostWindowSubclassProc(HWND hwnd, UINT msg, WPA
 			if (range) range->Release();
 			if (textDoc) textDoc->Release();
 			if (ole) ole->Release();
+
+			if (ret)
+				return ret;
 			break;
 		}
+
 	case WM_DESTROY:
 		{
 			//Desubclass
-			::SetWindowLong(hwnd, GWL_WNDPROC, (LONG) hwdat.pOldProc);
-			_mapHostInfo.erase(hwnd);
+			if (hwdat.pOldProc != NULL)
+				::SetWindowLong(hwnd, GWL_WNDPROC, (LONG) hwdat.pOldProc);
+			_mapHostInfo.erase(it);
 			break;
 		}
 	}
@@ -1085,6 +1182,67 @@ void CGifSmileyCtrl::OnTimer()
     m_nTimerId=NULL;
     m_nCurrentFrame=(m_nCurrentFrame+1)%m_nFrameCount;
     FireViewChange();
+}
+
+HRESULT CGifSmileyCtrl::GetRECT(RECT *rc)
+{
+	*rc = m_rectPos;
+	return S_OK;
+}
+
+HRESULT CGifSmileyCtrl::OnMsg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *res)
+{
+	*res = FALSE;
+	switch (msg)
+	{
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_LBUTTONDBLCLK:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_RBUTTONDBLCLK:
+	case WM_MBUTTONDOWN: 
+	case WM_MBUTTONUP:
+	case WM_MBUTTONDBLCLK:
+	case WM_MOUSEWHEEL:
+	case WM_KEYDOWN:
+	case WM_KEYUP:
+	case WM_CHAR:
+	case WM_SETCURSOR:
+		if (m_pFlash == NULL)
+			break;
+	case WM_MOUSEMOVE:
+		if (m_pFlash == NULL)
+			ShowHint();
+		else
+		{
+			POINT pt = { LOWORD(lParam), HIWORD(lParam) };
+			switch (msg)
+			{
+				case WM_LBUTTONDOWN:
+				case WM_LBUTTONUP:
+				case WM_LBUTTONDBLCLK:
+				case WM_RBUTTONDOWN:
+				case WM_RBUTTONUP:
+				case WM_RBUTTONDBLCLK:
+				case WM_MBUTTONDOWN: 
+				case WM_MBUTTONUP:
+				case WM_MBUTTONDBLCLK:
+				case WM_MOUSEWHEEL:
+				case WM_MOUSEMOVE:
+				{
+					pt.x -= m_rectPos.left;
+					pt.y -= m_rectPos.top;
+				}
+			}
+			
+			*res = m_pFlash->OnMsg(hwnd, msg, wParam, MAKELONG(pt.x, pt.y));
+			*res = TRUE;
+		}
+
+		break;
+	}
+	return S_OK;
 }
 
 ImageItem::ImageItem() : 

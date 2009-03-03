@@ -40,8 +40,10 @@ public:
     [id(2)]	HRESULT LoadFromFileSized( [in] BSTR bstrFileName, [in] INT nHeight );
 	[id(3)]	HRESULT SetHostWindow( [in] long hwndHostWindow, [in] INT nNotyfyMode );
 	[id(4)] HRESULT ShowHint( );
+	[id(5)] HRESULT OnMsg( [in] HWND hwnd, [in] UINT msg, [in] WPARAM wParam, [in] LPARAM lParam, [out] LRESULT *res );
+	[id(6)] HRESULT GetRECT( [out] RECT *rc );
+	[id(7)]	HRESULT LoadFlash( [in] BSTR bstrFileName, [in] BSTR bstrFlashVars, [in] INT nWidth, [in] INT nHeight );
 };
-
 
 // ITooltipData
 [
@@ -94,16 +96,17 @@ DECLARE_OLEMISC_STATUS(OLEMISC_RECOMPOSEONRESIZE |
 )
 
 BEGIN_COM_MAP(CGifSmileyCtrl)
+	COM_INTERFACE_ENTRY(IOleInPlaceObjectWindowless)
     COM_INTERFACE_ENTRY(IGifSmileyCtrl)
 	COM_INTERFACE_ENTRY(ITooltipData)
 	COM_INTERFACE_ENTRY(IOleControl)
 	COM_INTERFACE_ENTRY(IOleObject)	
 END_COM_MAP()
 
+
 BEGIN_PROP_MAP(CGifSmileyCtrl)
 	PROP_ENTRY("BackColor", DISPID_BACKCOLOR, CLSID_StockColorPage)
 END_PROP_MAP()
-
 
 BEGIN_MSG_MAP(CGifSmileyCtrl)
 	CHAIN_MSG_MAP(CComControl<CGifSmileyCtrl>)
@@ -117,6 +120,7 @@ public:
 	static HRESULT _InitModule();
 	static HRESULT _UninitModule();
 
+
 	// methods
 	CGifSmileyCtrl();
 	~CGifSmileyCtrl();
@@ -124,7 +128,8 @@ public:
 	HRESULT FireViewChange();
 	HRESULT OnDrawAdvanced(ATL_DRAWINFO& di);
 	HRESULT LoadFromFile( BSTR bstrFileName );
-	HRESULT LoadFromFileSized( BSTR bstrFileName, INT nHeight );        
+	HRESULT LoadFromFileSized( BSTR bstrFileName, INT nHeight );
+	HRESULT LoadFlash( BSTR bstrFileName, BSTR bstrFlashVars, INT nWidth, INT nHeight );
 	HRESULT SetHostWindow (long hwndHostWindow, INT nNotyfyMode );
 	void	OnBackColorChanged();
 	HRESULT FinalConstruct() {	return S_OK;}
@@ -136,6 +141,8 @@ public:
 		ShowSmileyTooltip();
 		return S_OK;
 	};
+	HRESULT OnMsg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *res);
+	HRESULT GetRECT(RECT *rc);
 
 public:
     //  properties:    
@@ -185,7 +192,8 @@ private:
     static VOID CALLBACK ToolTipTimerProc( HWND, UINT, UINT_PTR, DWORD );  
 	static VOID CALLBACK PurgeImageListTimerProc( HWND, UINT, UINT_PTR, DWORD );  
 	static LRESULT CALLBACK HostWindowSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	
+	static void HandleMsg( IGifSmileyCtrl * iGifSmlCtrl, HWND hwnd, POINT &pt, UINT msg, WPARAM wParam, LPARAM lParam );
+
 	STDMETHOD (Close) (DWORD dwSaveOption)
 	{
 		StopAnimation();
