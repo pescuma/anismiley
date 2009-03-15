@@ -991,6 +991,50 @@ inline HRESULT CGifSmileyCtrl::FireViewChange()
 }
 
 
+static IGifSmileyCtrl *GetSmileyCtrl(HWND hwnd, POINT pt)
+{
+	IRichEditOle * ole=NULL;
+	ITextDocument* textDoc=NULL;
+	ITextRange* range=NULL;	
+	IUnknown *iObject = NULL;
+	IGifSmileyCtrl *iGifSmlCtrl=NULL;
+	RECT rc = {0};
+
+	if (!::SendMessage(hwnd, EM_GETOLEINTERFACE, 0, (LPARAM)&ole)) goto err;
+	if (ole->QueryInterface(IID_ITextDocument, (void**)&textDoc) != S_OK) goto err;
+	if (textDoc->RangeFromPoint(pt.x, pt.y, &range) != S_OK) goto err;
+
+	if (range->GetEmbeddedObject(&iObject) != S_OK) 
+	{
+		LONG cp;
+		range->GetStart(&cp);
+		range->SetStart(cp-1);
+		range->SetEnd(cp);
+		if (range->GetEmbeddedObject(&iObject) != S_OK) goto err;
+	}
+
+	if (iObject->QueryInterface(IID_IGifSmileyCtrl, (void**) &iGifSmlCtrl) != S_OK) goto err;
+
+	iGifSmlCtrl->GetRECT(&rc);
+
+	::ScreenToClient(hwnd, &pt);
+
+	if (!PtInRect(&rc, pt))
+	{
+		iGifSmlCtrl->Release();
+		iGifSmlCtrl = NULL;
+	}
+
+err:
+	if (iObject) iObject->Release();
+	if (range) range->Release();
+	if (textDoc) textDoc->Release();
+	if (ole) ole->Release();
+
+	return iGifSmlCtrl;
+}
+
+
 LRESULT CALLBACK CGifSmileyCtrl::HostWindowSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	MAPHOSTINFO::iterator it = _mapHostInfo.find(hwnd);
@@ -1000,8 +1044,51 @@ LRESULT CALLBACK CGifSmileyCtrl::HostWindowSubclassProc(HWND hwnd, UINT msg, WPA
 	if	(hwdat.hwnd != hwnd) 
 		return FALSE;
 
+	/*
+	if (msg != EM_GETOLEINTERFACE)
+	{
+		LPARAM pos = GetMessagePos();
+		POINT pt={LOWORD(pos), HIWORD(pos)};
+		IGifSmileyCtrl *iGifSmlCtrl = GetSmileyCtrl(hwnd, pt);
+		if (iGifSmlCtrl)
+		{
+			switch (msg)
+			{
+				case WM_LBUTTONDOWN: OutputDebugStringA(" ** MSG: WM_LBUTTONDOWN\n"); break;
+				case WM_LBUTTONUP: OutputDebugStringA(" ** MSG: WM_LBUTTONUP\n"); break;
+				case WM_LBUTTONDBLCLK: OutputDebugStringA(" ** MSG: WM_LBUTTONDBLCLK\n"); break;
+				case WM_RBUTTONDOWN: OutputDebugStringA(" ** MSG: WM_RBUTTONDOWN\n"); break;
+				case WM_RBUTTONUP: OutputDebugStringA(" ** MSG: WM_RBUTTONUP\n"); break;
+				case WM_RBUTTONDBLCLK: OutputDebugStringA(" ** MSG: WM_RBUTTONDBLCLK\n"); break;
+				case WM_MBUTTONDOWN: OutputDebugStringA(" ** MSG: WM_MBUTTONDOWN\n"); break;
+				case WM_MBUTTONUP: OutputDebugStringA(" ** MSG: WM_MBUTTONUP\n"); break;
+				case WM_MBUTTONDBLCLK: OutputDebugStringA(" ** MSG: WM_MBUTTONDBLCLK\n"); break;
+				case WM_MOUSEWHEEL: OutputDebugStringA(" ** MSG: WM_MOUSEWHEEL\n"); break;
+				case WM_MOUSEMOVE: OutputDebugStringA(" ** MSG: WM_MOUSEMOVE\n"); break;
+				case WM_SETCURSOR: OutputDebugStringA(" ** MSG: WM_SETCURSOR\n"); break;
+				case WM_NCHITTEST: OutputDebugStringA(" ** MSG: WM_NCHITTEST\n"); break;
+				case WM_DESTROY: OutputDebugStringA(" ** MSG: WM_DESTROY\n"); break;
+				case EM_EXGETSEL: OutputDebugStringA(" ** MSG: EM_EXSETSEL\n"); break;
+				case EM_GETZOOM: OutputDebugStringA(" ** MSG: EM_GETZOOM\n"); break;
+				default:
+				{
+					TCHAR tmp[1024];
+					_sntprintf(tmp, 1024, _T(" ** MSG: %x\n"), msg);
+					OutputDebugString(tmp);
+					break;
+				}
+			}
+
+			iGifSmlCtrl->Release();
+		}
+	}
+	*/
+
 	switch (msg)
 	{
+	case EM_GETOLEINTERFACE:
+		break;
+
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
 	case WM_LBUTTONDBLCLK:
@@ -1011,61 +1098,47 @@ LRESULT CALLBACK CGifSmileyCtrl::HostWindowSubclassProc(HWND hwnd, UINT msg, WPA
 	case WM_MBUTTONDOWN: 
 	case WM_MBUTTONUP:
 	case WM_MBUTTONDBLCLK:
-	case WM_MOUSEMOVE:
 	case WM_MOUSEWHEEL:
-	case WM_SETCURSOR:
+	case WM_MOUSEMOVE:
+	{
+		POINT pt = { LOWORD(lParam), HIWORD(lParam) };
+		::ClientToScreen(hwnd, &pt);
+
+		IGifSmileyCtrl *iGifSmlCtrl = GetSmileyCtrl(hwnd, pt);
+		if (iGifSmlCtrl)
 		{
-			LPARAM pos = GetMessagePos();
-			POINT pt={LOWORD(pos), HIWORD(pos)};
-
-			IRichEditOle * ole=NULL;
-			ITextDocument* textDoc=NULL;
-			ITextRange* range=NULL;	
-			IUnknown *iObject = NULL;
-			IGifSmileyCtrl *iGifSmlCtrl=NULL;
-
-			do  {
-				if (!::SendMessage(hwnd, EM_GETOLEINTERFACE, 0, (LPARAM)&ole)) break;
-				if (ole->QueryInterface(IID_ITextDocument, (void**)&textDoc) != S_OK) break;
-				if (textDoc->RangeFromPoint(pt.x, pt.y, &range) != S_OK) break;
-
-				if (range->GetEmbeddedObject(&iObject) != S_OK) 
-				{
-					LONG cp;
-					range->GetStart(&cp);
-					range->SetStart(cp-1);
-					range->SetEnd(cp);
-					if (range->GetEmbeddedObject(&iObject) != S_OK) break;
-				}
-
-				if (iObject->QueryInterface(IID_IGifSmileyCtrl, (void**) &iGifSmlCtrl) != S_OK) break;
-				
-			} while(FALSE);
 			LRESULT ret = 0;
-			if (iGifSmlCtrl)
-			{
-				RECT rc = {0};
-				iGifSmlCtrl->GetRECT(&rc);
 
-				::ScreenToClient(hwnd, &pt);
-
-				if (PtInRect(&rc, pt))
-					iGifSmlCtrl->OnMsg(hwnd, msg, wParam, lParam, &ret);
-				iGifSmlCtrl->Release();
-			}
-			else
-				_pCurrentTip->HideSmileyTip();
-
-			if (iObject) iObject->Release();
-			if (range) range->Release();
-			if (textDoc) textDoc->Release();
-			if (ole) ole->Release();
+			iGifSmlCtrl->OnMsg(hwnd, msg, wParam, lParam, &ret);
+			iGifSmlCtrl->Release();
 
 			if (ret)
 				return ret;
-			break;
 		}
+		else
+			_pCurrentTip->HideSmileyTip();
 
+		break;
+	}
+
+	case WM_SETCURSOR:
+	case WM_NCHITTEST:
+	{
+		LPARAM pos = GetMessagePos();
+		POINT pt={LOWORD(pos), HIWORD(pos)};
+
+		IGifSmileyCtrl *iGifSmlCtrl = GetSmileyCtrl(hwnd, pt);
+		if (iGifSmlCtrl)
+		{
+			LRESULT ret = 0;
+			
+			iGifSmlCtrl->OnMsg(hwnd, msg, wParam, lParam, &ret);
+			iGifSmlCtrl->Release();
+
+			return ret;
+		}
+		break;
+	}
 	case WM_DESTROY:
 		{
 			//Desubclass
@@ -1205,42 +1278,47 @@ HRESULT CGifSmileyCtrl::OnMsg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
 	case WM_MBUTTONUP:
 	case WM_MBUTTONDBLCLK:
 	case WM_MOUSEWHEEL:
+		if (m_pFlash == NULL)
+			break;
+	case WM_MOUSEMOVE:
+	{
+		if (m_pFlash == NULL)
+		{
+			ShowHint();
+		}
+		else
+		{
+			POINT pt = { LOWORD(lParam), HIWORD(lParam) };
+//			LPARAM pos = GetMessagePos();
+//			POINT pt = { LOWORD(pos), HIWORD(pos) };
+
+			pt.x -= m_rectPos.left;
+			pt.y -= m_rectPos.top;
+
+			*res = m_pFlash->OnMsg(hwnd, msg, wParam, MAKELONG(pt.x, pt.y));
+			*res = TRUE; // XXX 
+		}
+
+		break;
+	}
+	case WM_NCHITTEST:
+	{
+		if (m_pFlash == NULL)
+			break;
+
+		*res = HTCLIENT;
+		break;
+	}
+
 	case WM_KEYDOWN:
 	case WM_KEYUP:
 	case WM_CHAR:
 	case WM_SETCURSOR:
 		if (m_pFlash == NULL)
 			break;
-	case WM_MOUSEMOVE:
-		if (m_pFlash == NULL)
-			ShowHint();
-		else
-		{
-			POINT pt = { LOWORD(lParam), HIWORD(lParam) };
-			switch (msg)
-			{
-				case WM_LBUTTONDOWN:
-				case WM_LBUTTONUP:
-				case WM_LBUTTONDBLCLK:
-				case WM_RBUTTONDOWN:
-				case WM_RBUTTONUP:
-				case WM_RBUTTONDBLCLK:
-				case WM_MBUTTONDOWN: 
-				case WM_MBUTTONUP:
-				case WM_MBUTTONDBLCLK:
-				case WM_MOUSEWHEEL:
-				case WM_MOUSEMOVE:
-				{
-					pt.x -= m_rectPos.left;
-					pt.y -= m_rectPos.top;
-				}
-			}
-			
-			*res = m_pFlash->OnMsg(hwnd, msg, wParam, MAKELONG(pt.x, pt.y));
-			*res = TRUE;
-		}
 
-		break;
+		*res = m_pFlash->OnMsg(hwnd, msg, wParam, lParam);
+		*res = TRUE; // XXX 
 	}
 	return S_OK;
 }
