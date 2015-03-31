@@ -1,0 +1,1 @@
+Plugin to insert Animated images to native RichEdit controls in dialogs. As example can be used to insert animated smiley
